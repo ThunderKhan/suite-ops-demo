@@ -1,0 +1,20 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Check, ClipboardCheck, ShieldCheck, X } from "lucide-react";
+import { useDemo } from "@/lib/demo-context";
+import { Avatar, EmptyState, Eyebrow, formatShortDate, PriorityPill } from "@/components/shared";
+
+export function InspectionsView() {
+  const { state, actorId, execute } = useDemo();
+  const actor = state.staff.find(person => person.id === actorId)!;
+  const [rejected, setRejected] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
+  const pending = state.tasks.filter(task => task.status === "pending_inspection");
+
+  return <><div className="page-intro"><div className="page-intro__copy"><Eyebrow>QUALITY ASSURANCE · ROOM HANDOFF</Eyebrow><h1>Ready means <em>verified.</em></h1><p>Every completed clean receives a final inspection before it can be marked ready for the next arrival.</p></div><div className="page-intro__actions"><Link href="/overview" className="button button--outline">Room rack <ArrowRight size={14}/></Link></div></div>
+    {actor.role !== "supervisor" ? <div className="note-box" style={{ marginBottom: 20 }}>Inspectors approve or reject rooms. Switch to <strong>Neha Kapoor · Floor supervisor</strong> in the top-right role menu to simulate this handoff.</div> : null}
+    {pending.length ? <div className="inspection-list">{pending.map(task => { const room = state.rooms.find(item => item.id === task.roomId)!; const cleaner = state.staff.find(person => person.id === task.assigneeId); return <section className="inspection-card" key={task.id}><div className="inspection-card__header"><div><Eyebrow>AWAITING YOUR REVIEW</Eyebrow><h2 className="inspection-card__number">Room {room.number}</h2><p className="muted-hint" style={{ marginTop: 9 }}>{room.category} room · Floor {room.floor}</p></div><PriorityPill priority={task.priority}/></div><div className="inspection-card__details"><Avatar person={cleaner} size="small"/><span>Cleaned by <strong>{cleaner?.name ?? "Unassigned"}</strong></span><span>· {formatShortDate(task.completedAt ?? task.createdAt)}</span></div><div className="detail-divider"/><span className="detail-label">CLEANING CHECKLIST</span><div className="inspection-card__check">{task.checklist.map(item => <span key={item.id}><Check size={14} color="#608775"/>{item.text}</span>)}</div><div className="inspection-card__actions"><button type="button" className="button button--dark" disabled={actor.role !== "supervisor"} onClick={() => execute({ type: "inspect", taskId: task.id, approved: true, expectedVersion: room.version })}>Approve room <ShieldCheck size={15}/></button><button type="button" className="button button--outline" disabled={actor.role !== "supervisor"} onClick={() => { setRejected(rejected === task.id ? null : task.id); setReason(""); }}>Request rework <X size={14}/></button></div>{rejected === task.id ? <div className="inspection-card__reject"><label className="field-label" htmlFor={`reason-${task.id}`}>Reason for rework</label><textarea id={`reason-${task.id}`} className="field textarea" placeholder="e.g. Bathroom mirror needs attention" value={reason} onChange={event => setReason(event.target.value)}/><button className="button button--gold" type="button" disabled={!reason.trim()} onClick={() => { const result = execute({ type: "inspect", taskId: task.id, approved: false, expectedVersion: room.version, reason }); if (result.ok) { setRejected(null); setReason(""); } }}>Send back for cleaning <ArrowRight size={14}/></button></div> : null}</section>; })}</div> : <div className="surface-shell"><div className="surface"><EmptyState icon={<ClipboardCheck size={26}/>} title="No inspections waiting" description="When housekeeping submits a room, the supervisor's decision will appear here. Switch to a cleaner role to submit a task."/><div style={{ display: "flex", justifyContent: "center", paddingBottom: 20 }}><Link href="/my-tasks" className="button button--outline">Go to housekeeping <ArrowRight size={14}/></Link></div></div></div>}
+  </>;
+}
