@@ -35,15 +35,20 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const channelRef = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed: unknown = JSON.parse(saved);
-        if (isValidState(parsed)) { stateRef.current = parsed; setState(parsed); }
-      }
-      const actor = window.localStorage.getItem(USER_KEY);
-      if (actor && seedState().staff.some(person => person.id === actor)) setActor(actor);
-    } catch { /* Storage unavailable: keep functional in-memory demo. */ }
+    let active = true;
+    // Read persisted browser state after hydration to keep server/client markup stable.
+    queueMicrotask(() => {
+      if (!active) return;
+      try {
+        const saved = window.localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed: unknown = JSON.parse(saved);
+          if (isValidState(parsed) && parsed.version >= stateRef.current.version) { stateRef.current = parsed; setState(parsed); }
+        }
+        const actor = window.localStorage.getItem(USER_KEY);
+        if (actor && seedState().staff.some(person => person.id === actor)) setActor(actor);
+      } catch { /* Storage unavailable: keep functional in-memory demo. */ }
+    });
 
     if (typeof BroadcastChannel !== "undefined") {
       const channel = new BroadcastChannel(CHANNEL);
@@ -58,7 +63,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       try { const parsed: unknown = JSON.parse(event.newValue); if (isValidState(parsed) && parsed.version > stateRef.current.version) { stateRef.current = parsed; setState(parsed); } } catch { /* Ignore malformed external values. */ }
     };
     window.addEventListener("storage", onStorage);
-    return () => { channelRef.current?.close(); window.removeEventListener("storage", onStorage); };
+    return () => { active = false; channelRef.current?.close(); window.removeEventListener("storage", onStorage); };
   }, []);
 
   const persist = useCallback((next: DemoState) => {

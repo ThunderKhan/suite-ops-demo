@@ -24,7 +24,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [roleMenu, setRoleMenu] = useState(false);
   const pendingInspections = state.tasks.filter(task => task.status === "pending_inspection").length;
 
-  useEffect(() => { setMenuOpen(false); setRoleMenu(false); }, [pathname]);
   useEffect(() => { if (!notice) return; const timeout = setTimeout(clearNotice, 5000); return () => clearTimeout(timeout); }, [notice, clearNotice]);
 
   return <div className="app-layout">
@@ -35,7 +34,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
       <div className="property-switch"><span className="property-switch__badge">T</span><span><strong>Taj Santacruz</strong><small>Mumbai · Concept property</small></span><ChevronDown size={15}/></div>
       <div className="sidebar__section-label">WORKSPACE</div>
-      <nav className="sidebar__nav">{navigation.map(item => { const Icon = item.icon; return <Link key={item.href} href={item.href} className={`sidebar__link ${pathname === item.href ? "sidebar__link--active" : ""}`}><Icon size={18} strokeWidth={1.6}/><span>{item.text}</span>{item.href === "/inspections" && pendingInspections > 0 ? <em>{pendingInspections}</em> : null}</Link>; })}</nav>
+      <nav className="sidebar__nav">{navigation.map(item => { const Icon = item.icon; return <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className={`sidebar__link ${pathname === item.href ? "sidebar__link--active" : ""}`}><Icon size={18} strokeWidth={1.6}/><span>{item.text}</span>{item.href === "/inspections" && pendingInspections > 0 ? <em>{pendingInspections}</em> : null}</Link>; })}</nav>
       <div className="sidebar__bottom"><div className="sidebar__quote"><span>“</span><p>Every room accounted for. Every handoff effortless.</p><i/></div><div className="sidebar__disclaimer">VSPH EXPLORATORY CONCEPT<br/>Illustrative data · No Taj endorsement</div></div>
     </aside>
     {menuOpen ? <button type="button" className="mobile-backdrop" aria-label="Close navigation" onClick={() => setMenuOpen(false)} /> : null}

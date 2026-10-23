@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, ArrowRight, Check, ClipboardList, Package2, ShoppingBag, TrendingDown } from "lucide-react";
+import { ArrowRight, Check, ClipboardList, Package2, ShoppingBag } from "lucide-react";
 import { useDemo } from "@/lib/demo-context";
 import { EmptyState, Eyebrow, formatShortDate, money, SectionHeading } from "@/components/shared";
 
